@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">Photoken</string>
+    <string name="def_id">510851154449-3i8379ldf1pojoh6d4nvr0h7uevpl9pj.apps.googleusercontent.com</string>
+    <string name="signinwithgoogle">Sign in with Google</string>
 </resources>
