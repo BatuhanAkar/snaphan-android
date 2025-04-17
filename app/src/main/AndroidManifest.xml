@@ -13,6 +13,11 @@
         android:theme="@style/Theme.Photoken"
         tools:targetApi="31">
         <activity
+            android:name=".StoreActivity"
+            android:exported="false"
+            android:label="@string/title_activity_store"
+            android:theme="@style/Theme.Photoken" />
+        <activity
             android:name=".AiActivity"
             android:exported="false"
             android:label="@string/title_activity_ai_activty"

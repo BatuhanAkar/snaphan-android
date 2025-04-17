@@ -5,4 +5,14 @@
     <string name="gicon">Google icon</string>
     <string name="title_activity_ai_activty">AiActivty</string>
     <string name="shop_icon">Shop</string>
+    <string name="token_icon">Token</string>
+    <string name="profile_photo">Profile_photo</string>
+    <string name="sign_out">Sign out</string>
+    <string name="share_with_others">Share with others</string>
+    <string name="earn_token">Earn 3 tokens for every invite that joins and logs into the app.</string>
+    <string name="rate_review">Rate and leave a review</string>
+    <string name="title_activity_store">StoreActivity</string>
+    <string name="select_image">Select image</string>
+    <string name="message_placeholder">Which type of masking do you prefer?</string>
+    <string name="ai_mode_generate">Generate</string>
 </resources>

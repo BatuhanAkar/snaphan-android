@@ -34,8 +34,14 @@ import androidx.lifecycle.lifecycleScope
 import com.batuscode.photoken.SignInActivty.Companion.context
 import com.batuscode.photoken.ui.theme.PhotokenTheme
 import com.batuscode.photoken.utils.Auth
+import com.batuscode.photoken.utils.FunctionsUtil
+import com.google.firebase.appcheck.debug.DebugAppCheckProviderFactory
+import com.google.firebase.appcheck.ktx.appCheck
 import com.google.firebase.auth.ktx.auth
+import com.google.firebase.functions.ktx.functions
+import com.google.firebase.initialize
 import com.google.firebase.ktx.Firebase
+import com.google.firebase.ktx.initialize
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -60,11 +66,16 @@ class SignInActivty : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        Firebase.initialize(this)
+        Firebase.appCheck.installAppCheckProviderFactory(
+            DebugAppCheckProviderFactory.getInstance(),
+        )
         // initialize context .
         context = this
 
         // initialize firebase auth variable .
         Auth.auth = Firebase.auth
+        FunctionsUtil.functions = Firebase.functions
 
         enableEdgeToEdge()
         setContent {
