@@ -6,6 +6,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 
 class AiActivityViewModel : ViewModel() {
+    private val _isGenerating =  mutableStateOf<Boolean>(false)
+    val isGenerating : MutableState<Boolean> = _isGenerating
+
+    fun updateGenerating(state : Boolean){
+        _isGenerating.value = state
+    }
+
     private val _selectedMod = mutableStateOf<String>("Generate")
     val selectedMod : MutableState<String> = _selectedMod
 

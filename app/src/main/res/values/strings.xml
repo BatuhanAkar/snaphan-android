@@ -15,4 +15,5 @@
     <string name="select_image">Select image</string>
     <string name="message_placeholder">Which type of masking do you prefer?</string>
     <string name="ai_mode_generate">Generate</string>
+    <string name="image_saved">Saved gallery.</string>
 </resources>

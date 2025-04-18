@@ -19,6 +19,7 @@
             android:theme="@style/Theme.Photoken" />
         <activity
             android:name=".AiActivity"
+            android:windowSoftInputMode="adjustResize"
             android:exported="false"
             android:label="@string/title_activity_ai_activty"
             android:theme="@style/Theme.Photoken" />

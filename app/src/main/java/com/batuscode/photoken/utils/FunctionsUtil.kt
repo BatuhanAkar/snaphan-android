@@ -1,7 +1,9 @@
 package com.batuscode.photoken.utils
 
 import android.util.Log
+import com.batuscode.photoken.AiActivity.Companion.aiActivityViewModel
 import com.google.firebase.functions.FirebaseFunctions
+import com.google.firebase.functions.FirebaseFunctionsException
 import com.google.firebase.functions.ktx.functions
 import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.Dispatchers
@@ -18,14 +20,47 @@ object FunctionsUtil {
             val result = FirebaseFunctions.getInstance()
                 .getHttpsCallable("generate")
                 .call(data)
+                .addOnSuccessListener {
+                    aiActivityViewModel.updateGenerating(false)
+                }
                 .await()
 
             val imageUrl = (result.data as? Map<*, *>)?.get("url") as? String
             Log.d(GENKIT_TAG, "Image URL: $imageUrl")
             imageUrl // return image url .
-        } catch (e: Exception) {
+        } catch (e: FirebaseFunctionsException) {
             Log.e(GENKIT_TAG, "Failed: ${e.message}", e)
-            null
+            when(e.code.name){
+                "INTERNAL" -> {
+
+                    Log.e(GENKIT_TAG, "Failed handling in internal :: ${e.code.name}")
+
+                    try {
+                        val result = FirebaseFunctions.getInstance()
+                            .getHttpsCallable("generate")
+                            .call(data)
+                            .addOnSuccessListener {
+                                aiActivityViewModel.updateGenerating(false)
+                            }
+                            .await()
+
+                        val imageUrl = (result.data as? Map<*, *>)?.get("url") as? String
+                        Log.d(GENKIT_TAG, "Image URL: $imageUrl")
+                        imageUrl // return image url .
+                    }catch (e : FirebaseFunctionsException){
+
+                        when(e.code.name){
+                            "INTERNAL" -> {
+                                null
+                            }
+                            else -> null
+                        }
+
+
+                    }
+                }
+                else -> null
+            }
         }
 
     }
