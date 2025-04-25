@@ -1,6 +1,8 @@
 package com.batuscode.photoken
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.os.Build
@@ -11,6 +13,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
@@ -52,6 +55,7 @@ import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
@@ -61,6 +65,7 @@ import androidx.compose.foundation.shape.CornerBasedShape
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
@@ -77,7 +82,9 @@ import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -134,6 +141,11 @@ import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.rememberNestedScrollInteropConnection
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.toBitmap
 import coil.ComponentRegistry
 import coil.compose.SubcomposeAsyncImage
@@ -155,6 +167,189 @@ class AiActivity : ComponentActivity() {
         lateinit var repository : PrefRepository
     }
 
+    private val requestPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission(),
+    ) { isGranted : Boolean ->
+        if (isGranted){
+
+        } else {
+
+        }
+    }
+    @Composable
+    private fun AskNotificationPermission(){
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU){
+            if (ContextCompat.checkSelfPermission(this , Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED){
+                //can post notification
+            } else if (notificationPermissionRationale(Manifest.permission.POST_NOTIFICATIONS)){
+                NotificationPermissionDialog(
+                    onDismiss = {}
+                )
+            }
+        }
+    }
+
+    @Composable
+    fun notificationPermissionRationale(permission : String) : Boolean{
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU){
+            val isGranted = ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+            return if (isGranted == PackageManager.PERMISSION_GRANTED) false else true
+        } else {
+            return true
+        }
+
+    }
+
+    @Composable
+    fun NotificationPermissionDialog(onDismiss: () -> Unit){
+        Dialog(
+            onDismissRequest = { onDismiss } ,
+            properties = DialogProperties(dismissOnBackPress = true, dismissOnClickOutside = true , usePlatformDefaultWidth = true)
+        ) {
+            Surface(
+                modifier = Modifier
+                    .padding(16.dp)
+                    .fillMaxWidth()
+                    .wrapContentHeight() ,
+                shape = RoundedCornerShape(24.dp),
+                color = MaterialTheme.colorScheme.surfaceVariant,
+                tonalElevation = 4.dp
+            ) {
+                Column(
+                    modifier = Modifier
+                        .padding(24.dp)
+                        .fillMaxWidth() ,
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally ,
+                ) {
+
+                    AsyncImage(
+                        model = painterResource(R.mipmap.ic_launcher_round) ,
+                        contentDescription = "" ,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .size(64.dp)
+                            .clip(CircleShape)
+                    )
+
+                    Text(
+                        text = stringResource(R.string.notificationpermissionquestiontext , stringResource(R.string.app_name)),
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center ,
+                    )
+
+                    Text(
+                        text = stringResource(R.string.in_app_notifications),
+                        fontSize = 16.sp,
+                        textAlign = TextAlign.Center
+                    )
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth() ,
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.End ,
+                    ) {
+                        TextButton(
+                            onClick = { onDismiss }
+                        ) {
+                            Text(
+                                text = stringResource(R.string.nothanks) ,
+                            )
+                        }
+
+                        Button(
+                            onClick = {
+
+                            }
+                        ) {
+                            Text(
+                                text = stringResource(R.string.ok) ,
+                                textAlign = TextAlign.Center ,
+                                maxLines = 1
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    @Composable
+    @Preview(showBackground = true)
+    fun NotificationPermissionDialogPreview(){
+        PhotokenTheme(darkTheme = true) {
+            Dialog(
+                onDismissRequest = {  } ,
+                properties = DialogProperties(dismissOnBackPress = true, dismissOnClickOutside = true , usePlatformDefaultWidth = true)
+            ) {
+                Surface(
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .fillMaxWidth()
+                        .wrapContentHeight() ,
+                    shape = RoundedCornerShape(24.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    tonalElevation = 4.dp
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .padding(24.dp)
+                            .fillMaxWidth() ,
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally ,
+                    ) {
+
+                        Image(
+                            painter = painterResource(R.drawable.defult_notification_icon) ,
+                            contentDescription = "" ,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier
+                                .size(64.dp)
+                                .clip(CircleShape)
+                        )
+
+                        Text(
+                            text = stringResource(R.string.notificationpermissionquestiontext , stringResource(R.string.app_name)),
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center ,
+                        )
+
+                        Text(
+                            text = stringResource(R.string.in_app_notifications),
+                            fontSize = 16.sp,
+                            textAlign = TextAlign.Center
+                        )
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth() ,
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.End ,
+                        ) {
+                            TextButton(
+                                onClick = {  }
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.nothanks) ,
+                                )
+                            }
+
+                            Button(
+                                onClick = {}
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.ok) ,
+                                    textAlign = TextAlign.Center ,
+                                    maxLines = 1
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
     override fun onStart() {
         super.onStart()
         CoroutineScope(Dispatchers.IO).launch {
@@ -297,7 +492,7 @@ class AiActivity : ComponentActivity() {
                                         contentAlignment = Alignment.Center,
                                         modifier = Modifier
                                             .fillMaxSize()
-                                            .padding(horizontal = 8.dp , vertical = 8.dp)
+                                            .padding(horizontal = 8.dp, vertical = 8.dp)
                                     ) {
                                         Row(
                                             modifier = Modifier
@@ -316,9 +511,18 @@ class AiActivity : ComponentActivity() {
                                                 decorationBox = { innerTextField ->
                                                     Box(
                                                         modifier = Modifier
-                                                            .shadow(elevation = 8.dp, shape = RoundedCornerShape(32.dp))
-                                                            .background(color = MaterialTheme.colorScheme.surfaceVariant, shape = RoundedCornerShape(8.dp))
-                                                            .padding(horizontal = 32.dp, vertical = 16.dp)
+                                                            .shadow(
+                                                                elevation = 8.dp,
+                                                                shape = RoundedCornerShape(32.dp)
+                                                            )
+                                                            .background(
+                                                                color = MaterialTheme.colorScheme.surfaceVariant,
+                                                                shape = RoundedCornerShape(8.dp)
+                                                            )
+                                                            .padding(
+                                                                horizontal = 32.dp,
+                                                                vertical = 16.dp
+                                                            )
 
                                                     ) {
                                                         if (prompt.value.isEmpty()){
@@ -370,7 +574,7 @@ class AiActivity : ComponentActivity() {
                                         contentAlignment = Alignment.Center,
                                         modifier = Modifier
                                             .fillMaxSize()
-                                            .padding(horizontal = 8.dp , vertical = 8.dp)
+                                            .padding(horizontal = 8.dp, vertical = 8.dp)
                                     ) {
 
                                         // foto seçilmemişse
@@ -411,9 +615,18 @@ class AiActivity : ComponentActivity() {
                                                     decorationBox = { innerTextField ->
                                                         Box(
                                                             modifier = Modifier
-                                                                .shadow(elevation = 8.dp, shape = RoundedCornerShape(32.dp))
-                                                                .background(color = MaterialTheme.colorScheme.surfaceVariant, shape = RoundedCornerShape(8.dp))
-                                                                .padding(horizontal = 32.dp, vertical = 16.dp)
+                                                                .shadow(
+                                                                    elevation = 8.dp,
+                                                                    shape = RoundedCornerShape(32.dp)
+                                                                )
+                                                                .background(
+                                                                    color = MaterialTheme.colorScheme.surfaceVariant,
+                                                                    shape = RoundedCornerShape(8.dp)
+                                                                )
+                                                                .padding(
+                                                                    horizontal = 32.dp,
+                                                                    vertical = 16.dp
+                                                                )
 
                                                         ) {
                                                             if (prompt.value.isEmpty()){
@@ -464,6 +677,7 @@ class AiActivity : ComponentActivity() {
                     }
                 ) { innerPadding ->
 
+
                     AiChatContainer(
                         modifier = Modifier
                             .padding(innerPadding) ,
@@ -486,6 +700,8 @@ class AiActivity : ComponentActivity() {
                             animationDuration = 300  // Animation duration for opening/closing the drawer
                         )
                     }
+                    AskNotificationPermission()
+
                 }
 
                 }
@@ -980,7 +1196,7 @@ fun CustomSideDrawerContent(
                 } ,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp , vertical = 16.dp)
+                    .padding(horizontal = 16.dp, vertical = 16.dp)
             ) {
                 Text(
                     text = stringResource(R.string.rate_review)
@@ -1009,7 +1225,6 @@ fun CustomSideDrawerContent(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
-@Preview(showBackground = true)
 @Composable
 fun GreetingPreview() {
     val context = LocalContext.current
