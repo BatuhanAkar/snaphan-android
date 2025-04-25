@@ -11,13 +11,12 @@ import androidx.credentials.Credential
 import androidx.credentials.CredentialManager
 import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
-import androidx.credentials.GetCredentialResponse
 import androidx.credentials.exceptions.ClearCredentialException
 import androidx.credentials.exceptions.GetCredentialCancellationException
 import androidx.credentials.exceptions.NoCredentialException
 import com.batuscode.photoken.AiActivity
 import com.batuscode.photoken.R
-import com.batuscode.photoken.SignInActivty.Companion.context
+import com.batuscode.photoken.SignInActivty
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.firebase.auth.FirebaseAuth
@@ -27,6 +26,7 @@ import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential.Co
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
+import okhttp3.internal.wait
 
 object Auth {
     const val TAG = "AuthObject"
@@ -52,8 +52,8 @@ object Auth {
                 // Your server's client ID, not your Android client ID.
                 .setServerClientId(context.getString(R.string.default_web_client_id))
                 // Only show accounts previously used to sign in.
-                .setFilterByAuthorizedAccounts(false)
-                .setAutoSelectEnabled(false)
+                .setFilterByAuthorizedAccounts(true)
+                .setAutoSelectEnabled(true)
                 .build()
             // Create the Credential Manager request
             val request = GetCredentialRequest.Builder()
@@ -103,6 +103,7 @@ object Auth {
                         Log.d(TAG, "signInWithCredential:success")
                         val intent = Intent(context , AiActivity::class.java)
                         context.startActivity(intent)
+                        (context as? Activity)?.finish()
                     } else {
                         // If sign in fails, display a message to the user
                         Log.w(TAG, "signInWithCredential:failure", task.exception)
@@ -120,6 +121,10 @@ object Auth {
             val clearRequest = ClearCredentialStateRequest()
             val credentialManager = CredentialManager.create(context)
             credentialManager.clearCredentialState(clearRequest)
+            val intent = Intent(context, SignInActivty::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
+            }
+            context.startActivity(intent)
             ( context as? Activity)?.finish()
             Log.e(TAG, "clean credential state")
         }   catch (e: ClearCredentialException) {

@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Photoken</string>
+    <string name="app_name">Snaphan</string>
     <string name="continuewithgoogle">Continue with Google</string>
 
     <string name="gicon">Google icon</string>
@@ -16,4 +16,8 @@
     <string name="message_placeholder">Which type of masking do you prefer?</string>
     <string name="ai_mode_generate">Generate</string>
     <string name="image_saved">Saved gallery.</string>
+    <string name="welcome">Welcome</string>
+    <string name="title_activity_welcome">WelcomeActivity</string>
+    <string name="explore_tour">Swipe for modes</string>
+    <string name="imdone">I\'m done</string>
 </resources>

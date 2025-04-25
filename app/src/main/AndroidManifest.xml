@@ -1,8 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools">
+    xmlns:tools="http://schemas.android.com/tools" >
+
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <queries>
+        <intent>
+            <action android:name="com.instagram.share.ADD_TO_STORY" />
+
+            <data android:mimeType="image/*" />
+        </intent>
+    </queries>
 
     <application
+        android:name=".MyApplication"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -11,7 +22,21 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Photoken"
-        tools:targetApi="31">
+        tools:targetApi="31" >
+        <service
+            android:name=".service.PurchaseMessagingService"
+            android:enabled="true"
+            android:exported="false" >
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
+
+        <activity
+            android:name=".WelcomeActivity"
+            android:exported="false"
+            android:label="@string/title_activity_welcome"
+            android:theme="@style/Theme.Photoken" />
         <activity
             android:name=".StoreActivity"
             android:exported="false"
@@ -19,15 +44,15 @@
             android:theme="@style/Theme.Photoken" />
         <activity
             android:name=".AiActivity"
-            android:windowSoftInputMode="adjustResize"
             android:exported="false"
             android:label="@string/title_activity_ai_activty"
-            android:theme="@style/Theme.Photoken" />
+            android:theme="@style/Theme.Photoken"
+            android:windowSoftInputMode="adjustResize" />
         <activity
             android:name=".SignInActivty"
             android:exported="true"
             android:label="@string/app_name"
-            android:theme="@style/Theme.Photoken">
+            android:theme="@style/Theme.Photoken" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

@@ -141,22 +141,52 @@ import coil.compose.rememberAsyncImagePainter
 import coil.disk.DiskCache
 import coil.memory.MemoryCache
 import com.batuscode.photoken.AiActivity.Companion.snackbarHostState
+import com.batuscode.photoken.data.PrefRepository
 import com.batuscode.photoken.utils.CrudUtils
 import com.batuscode.photoken.utils.CrudUtils.crudTAG
+import com.batuscode.photoken.utils.InAppReview
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class AiActivity : ComponentActivity() {
     companion object {
         lateinit var aiActivityViewModel: AiActivityViewModel
         val snackbarHostState = SnackbarHostState()
+        lateinit var repository : PrefRepository
+    }
 
+    override fun onStart() {
+        super.onStart()
+        CoroutineScope(Dispatchers.IO).launch {
+            repository.readOnBoardingState().collect { completed ->
+                if (!completed) {
+                    val intent = Intent(this@AiActivity , WelcomeActivity::class.java).apply {
+                        flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
+                    }
+                    startActivity(intent)
+                }
+            }
+        }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        CoroutineScope(Dispatchers.IO).launch {
+            aiActivityViewModel.unregister()
+        }
     }
     @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
     @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+
+        repository = PrefRepository(this)
         aiActivityViewModel = ViewModelProvider(this).get(AiActivityViewModel::class.java)
 
+        lifecycleScope.launch {
+            aiActivityViewModel.register()
+        }
         enableEdgeToEdge()
         setContent {
             val context = LocalContext.current
@@ -164,6 +194,7 @@ class AiActivity : ComponentActivity() {
             var isSendedPhoto = remember { mutableStateOf(false) }
             var prompt = remember { mutableStateOf("") }
             val selectedMod by remember { derivedStateOf { aiActivityViewModel.selectedMod } }
+            val token by remember { derivedStateOf { aiActivityViewModel.user.value?.token } }
             PhotokenTheme(darkTheme = true) {
                 Scaffold(
                     modifier = Modifier
@@ -212,7 +243,7 @@ class AiActivity : ComponentActivity() {
                                     ) {
                                         Row {
                                             Text(
-                                                text = "1B"
+                                                text = if (token != null) token.toString() else "9"
                                             )
                                             Image(
                                                 painter = painterResource(R.drawable.token_24dp_ffd700_fill0_wght400_grad0_opsz24) ,
@@ -298,13 +329,13 @@ class AiActivity : ComponentActivity() {
                                                         }
                                                         innerTextField()
                                                     }
-
                                                 }
                                             )
 
                                             IconButton(
                                                 onClick = {
                                                     CoroutineScope(Dispatchers.IO).launch {
+                                                       // FunctionsUtil.checkStat()
                                                         aiActivityViewModel.updateGenerating(true)
                                                         val mprompt = prompt.value
                                                         prompt.value = ""
@@ -870,11 +901,13 @@ fun CustomSideDrawerOverlay(
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
 @Composable
 fun CustomSideDrawerContent(
     drawerWidth: Dp = 300.dp ,
     cornerRadius: Dp = 32.dp,
 ){
+    val context = LocalContext.current
     Column(
         modifier = Modifier
             .fillMaxHeight()
@@ -884,25 +917,45 @@ fun CustomSideDrawerContent(
                 shape = RoundedCornerShape(topEnd = cornerRadius, bottomEnd = cornerRadius)
 
             ) ,
-        verticalArrangement = Arrangement.Bottom
+        verticalArrangement = Arrangement.Bottom,
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
 
-        Box {
+        Spacer(modifier = Modifier.height(64.dp))
+        Box(
+
+        ) {
             AsyncImage(
-                model = R.drawable.token_24dp_ffd700_fill0_wght400_grad0_opsz24 ,
+                model = Auth.auth.currentUser?.photoUrl ,
                 contentDescription = stringResource(R.string.profile_photo) ,
                 contentScale = ContentScale.Crop ,
                 modifier = Modifier
-                    .size(86.dp)
+                    .size(172.dp)
                     .clip(CircleShape)
             )
+
+
         }
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Text(
+            text = Auth.auth.currentUser?.displayName!! ,
+            style = MaterialTheme.typography.titleLarge
+        )
+        Spacer(modifier = Modifier.height(32.dp))
 
         Column {
 
 
             OutlinedButton(
-                onClick = {} ,
+                onClick = {
+                    val intent = Intent()
+                    intent.setAction(Intent.ACTION_SEND)
+                    intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    intent.setType("*/*")
+                    intent.putExtra(Intent.EXTRA_TEXT,"merhaba")
+                    context.startActivity(Intent.createChooser(intent,"share"))
+                } ,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp)
@@ -922,7 +975,9 @@ fun CustomSideDrawerContent(
 
 
             OutlinedButton(
-                onClick = {} ,
+                onClick = {
+                    InAppReview.requestReview(context)
+                } ,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp , vertical = 16.dp)
@@ -937,7 +992,9 @@ fun CustomSideDrawerContent(
         Spacer(modifier = Modifier.weight(1f))
         OutlinedButton(
             onClick = {
-
+                CoroutineScope(Dispatchers.IO).launch {
+                    Auth.signOut(context)
+                }
             } ,
             modifier = Modifier
                 .fillMaxWidth()
@@ -962,7 +1019,8 @@ fun GreetingPreview() {
     var prompt = remember { mutableStateOf("") }
     val selectedMod by remember { mutableStateOf("Generate") }
     PhotokenTheme(darkTheme = true) {
-        Scaffold(
+        CustomSideDrawerContent()
+        /*Scaffold(
             modifier = Modifier
                 .fillMaxSize() ,
             topBar = {
@@ -1229,6 +1287,6 @@ fun GreetingPreview() {
                     animationDuration = 300  // Animation duration for opening/closing the drawer
                 )
             }
-        }
+        }*/
     }
 }
