@@ -223,8 +223,8 @@ class AiActivity : ComponentActivity() {
                     horizontalAlignment = Alignment.CenterHorizontally ,
                 ) {
 
-                    AsyncImage(
-                        model = painterResource(R.mipmap.ic_launcher_round) ,
+                    Image(
+                        painter = painterResource(R.drawable.token_24dp_ffd700_fill0_wght400_grad0_opsz24) ,
                         contentDescription = "" ,
                         contentScale = ContentScale.Crop,
                         modifier = Modifier
