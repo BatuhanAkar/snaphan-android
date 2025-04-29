@@ -35,6 +35,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import com.batuscode.photoken.SignInActivty.Companion.context
 import com.batuscode.photoken.integrity.IntegrityHelper
@@ -42,6 +43,7 @@ import com.batuscode.photoken.model.User
 import com.batuscode.photoken.ui.theme.PhotokenTheme
 import com.batuscode.photoken.utils.Auth
 import com.batuscode.photoken.utils.FunctionsUtil
+import com.batuscode.photoken.viewmodel.SignInActivityViewModel
 import com.batuscode.photoken.viewmodel.UserUtil
 import com.batuscode.photoken.viewmodel.UserUtil.db
 import com.google.firebase.FirebaseApp
@@ -54,14 +56,18 @@ import com.google.firebase.functions.ktx.functions
 import com.google.firebase.initialize
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.ktx.initialize
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
+@AndroidEntryPoint
 class SignInActivty : ComponentActivity() {
 
     companion object {
         lateinit var context: Context
+        lateinit var signInActivityViewModel: SignInActivityViewModel
     }
 
     override fun onStart() {
@@ -69,13 +75,26 @@ class SignInActivty : ComponentActivity() {
 
         val currentUser = Auth.auth
         if (currentUser.currentUser != null){
-            val intent = Intent(context , AiActivity::class.java).apply {
-                flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
-            }
 
-            context.startActivity(intent)
-            finish()
+            CoroutineScope(Dispatchers.IO).launch {
+                signInActivityViewModel.register()
+                signInActivityViewModel.checkClaims()
+
+                withContext(Dispatchers.Default) {
+                    val intent = Intent(context , AiActivity::class.java).apply {
+                        flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
+                    }
+                    context.startActivity(intent)
+                    finish()
+                }
+            }
         }
+
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        Log.d("SignInActivity" , "called onDestroy...")
 
     }
     @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
@@ -100,6 +119,8 @@ class SignInActivty : ComponentActivity() {
 
         // init fdb .
         UserUtil.db = Firebase.database
+
+        signInActivityViewModel = ViewModelProvider(this).get(SignInActivityViewModel::class.java)
 
         enableEdgeToEdge()
         setContent {
@@ -133,7 +154,7 @@ fun SignInScreen(modifier: Modifier = Modifier){
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Image(
-                painter = painterResource(R.drawable.first) ,
+                painter = painterResource(R.drawable.snaphanicon) ,
                 contentDescription = "" ,
                 modifier = Modifier
                     .clip(CircleShape)

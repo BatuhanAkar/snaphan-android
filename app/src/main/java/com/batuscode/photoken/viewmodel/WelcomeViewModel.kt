@@ -10,6 +10,7 @@ import com.batuscode.photoken.utils.OnBoardingPage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 @HiltViewModel
@@ -19,7 +20,7 @@ open class WelcomeViewModel @Inject constructor(
     val _pages = mutableStateListOf<OnBoardingPage>()
     val pages : List<OnBoardingPage> = _pages
 
-    suspend fun saveOnBoardingState(completed: Boolean) {
+    suspend fun saveOnBoardingState(completed: Boolean) = withContext(Dispatchers.IO) {
         viewModelScope.launch(Dispatchers.IO) {
             repository.saveOnBoardingState(completed = completed)
         }

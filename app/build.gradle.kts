@@ -15,7 +15,7 @@ android {
 
     defaultConfig {
         applicationId = "com.batuscode.photoken"
-        minSdk = 26
+        minSdk = 28
         targetSdk = 35
         versionCode = 2
         versionName = "1.0"

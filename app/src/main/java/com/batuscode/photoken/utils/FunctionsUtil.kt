@@ -101,4 +101,20 @@ object FunctionsUtil {
         }
 
     }
+
+    suspend fun sendMSGtoken(token : String) = withContext(Dispatchers.IO) {
+        val uid = Auth.auth.currentUser?.uid
+        val data = hashMapOf("token" to token)
+
+        functions
+            .getHttpsCallable("saveMSGtoken")
+            .call(data)
+            .addOnCompleteListener { task ->
+                if (!task.isSuccessful){
+                    return@addOnCompleteListener
+                }
+                Log.d(GENKIT_TAG , "saved msg token")
+            }
+
+    }
 }

@@ -153,6 +153,7 @@ import coil.compose.rememberAsyncImagePainter
 import coil.disk.DiskCache
 import coil.memory.MemoryCache
 import com.batuscode.photoken.AiActivity.Companion.snackbarHostState
+import com.batuscode.photoken.SignInActivty.Companion.signInActivityViewModel
 import com.batuscode.photoken.data.PrefRepository
 import com.batuscode.photoken.utils.CrudUtils
 import com.batuscode.photoken.utils.CrudUtils.crudTAG
@@ -170,10 +171,8 @@ class AiActivity : ComponentActivity() {
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission(),
     ) { isGranted : Boolean ->
-        if (isGranted){
-
-        } else {
-
+        CoroutineScope(Dispatchers.IO).launch {
+            aiActivityViewModel.saveNotificationState(isGranted)
         }
     }
     @Composable
@@ -183,8 +182,12 @@ class AiActivity : ComponentActivity() {
                 //can post notification
             } else if (notificationPermissionRationale(Manifest.permission.POST_NOTIFICATIONS)){
                 NotificationPermissionDialog(
-                    onDismiss = {}
+                    onDismiss = {
+                        aiActivityViewModel._isGrantedNotificationPermission.value = false
+                    }
                 )
+            } else {
+                requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
             }
         }
     }
@@ -260,7 +263,8 @@ class AiActivity : ComponentActivity() {
 
                         Button(
                             onClick = {
-
+                                aiActivityViewModel._isGrantedNotificationPermission.value = false
+                                requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                             }
                         ) {
                             Text(
@@ -328,7 +332,10 @@ class AiActivity : ComponentActivity() {
                             horizontalArrangement = Arrangement.End ,
                         ) {
                             TextButton(
-                                onClick = {  }
+                                onClick = {
+                                    aiActivityViewModel._isGrantedNotificationPermission.value = false
+
+                                }
                             ) {
                                 Text(
                                     text = stringResource(R.string.nothanks) ,
@@ -336,7 +343,9 @@ class AiActivity : ComponentActivity() {
                             }
 
                             Button(
-                                onClick = {}
+                                onClick = {
+                                    aiActivityViewModel._isGrantedNotificationPermission.value = false
+                                }
                             ) {
                                 Text(
                                     text = stringResource(R.string.ok) ,
@@ -352,22 +361,12 @@ class AiActivity : ComponentActivity() {
     }
     override fun onStart() {
         super.onStart()
-        CoroutineScope(Dispatchers.IO).launch {
-            repository.readOnBoardingState().collect { completed ->
-                if (!completed) {
-                    val intent = Intent(this@AiActivity , WelcomeActivity::class.java).apply {
-                        flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
-                    }
-                    startActivity(intent)
-                }
-            }
-        }
     }
 
     override fun onDestroy() {
         super.onDestroy()
         CoroutineScope(Dispatchers.IO).launch {
-            aiActivityViewModel.unregister()
+            signInActivityViewModel.unregister()
         }
     }
     @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
@@ -379,9 +378,6 @@ class AiActivity : ComponentActivity() {
         repository = PrefRepository(this)
         aiActivityViewModel = ViewModelProvider(this).get(AiActivityViewModel::class.java)
 
-        lifecycleScope.launch {
-            aiActivityViewModel.register()
-        }
         enableEdgeToEdge()
         setContent {
             val context = LocalContext.current
@@ -389,7 +385,10 @@ class AiActivity : ComponentActivity() {
             var isSendedPhoto = remember { mutableStateOf(false) }
             var prompt = remember { mutableStateOf("") }
             val selectedMod by remember { derivedStateOf { aiActivityViewModel.selectedMod } }
-            val token by remember { derivedStateOf { aiActivityViewModel.user.value?.token } }
+            val token by remember { derivedStateOf { signInActivityViewModel.user.value?.token } }
+            val isNeedAskNotificationPermission by remember { derivedStateOf { aiActivityViewModel._isGrantedNotificationPermission.value } }
+            Log.d("isNeedAskNotificationPermission" , isNeedAskNotificationPermission.toString())
+
             PhotokenTheme(darkTheme = true) {
                 Scaffold(
                     modifier = Modifier
@@ -700,7 +699,9 @@ class AiActivity : ComponentActivity() {
                             animationDuration = 300  // Animation duration for opening/closing the drawer
                         )
                     }
-                    AskNotificationPermission()
+                    if (isNeedAskNotificationPermission){
+                        AskNotificationPermission()
+                    }
 
                 }
 
